@@ -1,0 +1,6 @@
+name = "pentatonic-solo-builder"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-05-09"
+
+[vars]
+APP_NAME = "Pentatonic Solo Builder"

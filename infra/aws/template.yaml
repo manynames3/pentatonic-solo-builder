@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Optional AWS generator endpoint for Pentatonic Solo Builder.
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: "*"
+  EndpointToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+  BedrockModelId:
+    Type: String
+    Default: ""
+    Description: Optional Amazon Bedrock model id for model-generated solos.
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 30
+    MemorySize: 512
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        ALLOWED_ORIGIN: !Ref AllowedOrigin
+        ENDPOINT_TOKEN: !Ref EndpointToken
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+
+Resources:
+  SoloApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowHeaders:
+          - content-type
+          - authorization
+        AllowMethods:
+          - POST
+          - OPTIONS
+
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  SoloGeneratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/handler.handler
+      Environment:
+        Variables:
+          UPLOAD_BUCKET: !Ref UploadBucket
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - S3CrudPolicy:
+            BucketName: !Ref UploadBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: "*"
+      Events:
+        Generate:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref SoloApi
+            Path: /generate
+            Method: POST
+
+Outputs:
+  ApiEndpoint:
+    Description: Configure this as AWS_SOLO_ENDPOINT in Cloudflare Pages.
+    Value: !Sub "https://${SoloApi}.execute-api.${AWS::Region}.amazonaws.com/generate"
