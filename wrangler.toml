@@ -1,4 +1,4 @@
-name = "pentatonic-solo-builder"
+name = "pentatonic-solo-builder-github"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-05-09"
 

@@ -21,6 +21,10 @@ npm run pages:dev
 
 ## Deploy To Cloudflare Pages
 
+The production Cloudflare Pages project is `pentatonic-solo-builder-github`, connected to the public GitHub repository. Pushes to the `production` branch trigger Cloudflare Pages builds.
+
+Manual deploy is still available:
+
 ```bash
 npm run build
 npm run deploy
